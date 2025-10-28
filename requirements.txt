@@ -1,0 +1,9 @@
+pandas
+scikit-learn
+tqdm
+torch
+torchaudio
+numpy
+matplotlib
+# 可选：如需导出 ESP-DL
+# esp-ppq
