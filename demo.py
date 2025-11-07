@@ -26,7 +26,7 @@ def main() -> None:
     ).to(device)
 
     weights_path = Path("..") / cfg.MODEL_EXPORT
-    state = torch.load(weights_path, map_location=device)
+    state = torch.load(weights_path, map_location=device, weights_only=True)
     if isinstance(state, dict) and "state_dict" in state:
         state = state["state_dict"]
     model.load_state_dict(state, strict=False)

@@ -1,16 +1,15 @@
-"""Reusable dataset and model definitions for ESP-friendly bird song training."""
 
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
-
 class AudioDataset(Dataset):
     """Dataset wrapper for cached waveform tensors generated during preprocessing."""
 
-    def __init__(self, dataframe, cfg):
+    def __init__(self, dataframe, cfg, is_train: bool = False):
         self.df = dataframe.reset_index(drop=True)
         self.cfg = cfg
+        self.is_train = is_train
 
     def __len__(self):
         return len(self.df)
@@ -20,8 +19,16 @@ class AudioDataset(Dataset):
         pt_path = row["path"]
         label = int(row["label"])
         try:
-            data = torch.load(pt_path, map_location="cpu")
+            data = torch.load(pt_path, map_location="cpu", weights_only=True)
             waveform = data["waveform"]
+            # On-the-fly Gaussian noise augmentation for training only
+            if self.is_train and getattr(self.cfg, "NOISE_ADD_PROB", 0.0) > 0:
+                if torch.rand(1).item() < float(getattr(self.cfg, "NOISE_ADD_PROB", 0.0)):
+                    std = torch.std(waveform)
+                    if torch.isfinite(std) and std > 1e-6:
+                        noise_std = float(getattr(self.cfg, "NOISE_REL_STD", 0.0)) * float(std)
+                        if noise_std > 0:
+                            waveform = waveform + torch.randn_like(waveform) * noise_std
             return waveform, torch.tensor(label, dtype=torch.long)
         except Exception as exc:
             print(f"Warning: failed to load cached tensor {pt_path}: {exc}")

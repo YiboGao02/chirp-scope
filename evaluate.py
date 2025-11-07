@@ -31,7 +31,7 @@ def evaluate(weights_path: str, batch_size: Optional[int] = None, device_str: Op
         dropout=cfg.model_dropout,
     ).to(device)
 
-    state = torch.load(weights_path, map_location=device)
+    state = torch.load(weights_path, map_location=device, weights_only=True)
     model.load_state_dict(state, strict=False)
     model.eval()
 

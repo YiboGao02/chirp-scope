@@ -6,7 +6,11 @@ from pathlib import Path
 class DataConfig:
     """Dataset locations and split defaults."""
 
-    DATA_ROOT = Path("dataset/train_data")
+    # Resolve project root (repo root) from this config file location
+    PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+    # Dataset root in this repository: data/dataset/...
+    DATA_ROOT = PROJECT_ROOT / "data" / "dataset"
     TRAIN_CSV = DATA_ROOT / "birdclef-2023" / "train_metadata.csv"
     TRAIN_AUDIO_DIR = DATA_ROOT / "birdclef-2023" / "train_audio"
     NOISE_ROOT_DIR = DATA_ROOT / "background_noise"
@@ -19,11 +23,11 @@ class DataConfig:
     TEST_SIZE = 0.05
     RANDOM_STATE = 42
 
-    TRAIN_METADATA = Path("train_metadata.csv")
-    VALID_METADATA = Path("valid_metadata.csv")
-    TEST_METADATA = Path("test_metadata.csv")
-    PROCESSED_TRAIN_METADATA = Path("train_metadata_processed.csv")
-    PROCESSED_VALID_METADATA = Path("valid_metadata_processed.csv")
+    TRAIN_METADATA = PROJECT_ROOT / "data" / "train_metadata.csv"
+    VALID_METADATA = PROJECT_ROOT / "data" / "valid_metadata.csv"
+    TEST_METADATA = PROJECT_ROOT / "data" / "test_metadata.csv"
+    PROCESSED_TRAIN_METADATA = PROJECT_ROOT / "data" / "train_metadata_processed.csv"
+    PROCESSED_VALID_METADATA = PROJECT_ROOT / "data" / "valid_metadata_processed.csv"
 
 
 class TrainingConfig(DataConfig):
@@ -50,3 +54,11 @@ class TrainingConfig(DataConfig):
     model_dropout = 0.05
 
     MODEL_EXPORT = Path("model.pth")
+
+    # Audio preprocessing and augmentation
+    ENABLE_PEAK_NORM = True
+    TARGET_PEAK = 0.891
+    PEAK_ONLY_ATTENUATE = True
+
+    NOISE_ADD_PROB = 0.3  # probability to apply noise to a sample
+    NOISE_REL_STD = 0.05  

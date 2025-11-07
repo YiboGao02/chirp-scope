@@ -2,6 +2,8 @@
 
 import math
 from typing import Dict, List
+from pathlib import Path
+import sys
 
 import pandas as pd
 import torch
@@ -9,6 +11,11 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+# Ensure project root is on sys.path when running this file directly
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.config import TrainingConfig
 from model.model import AudioDataset, TinyESPNet
@@ -99,13 +106,13 @@ def main() -> None:
     df_valid = pd.read_csv(cfg.PROCESSED_VALID_METADATA)
 
     train_loader = DataLoader(
-        AudioDataset(df_train, cfg),
+        AudioDataset(df_train, cfg, is_train=True),
         batch_size=cfg.BATCH_SIZE,
         shuffle=True,
         num_workers=cfg.NUM_WORKERS,
     )
     valid_loader = DataLoader(
-        AudioDataset(df_valid, cfg),
+        AudioDataset(df_valid, cfg, is_train=False),
         batch_size=cfg.BATCH_SIZE,
         shuffle=False,
         num_workers=cfg.NUM_WORKERS,

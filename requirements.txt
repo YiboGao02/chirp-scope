@@ -5,5 +5,8 @@ torch
 torchaudio
 numpy
 matplotlib
+# Loudness normalization (LUFS)
+pyloudnorm
+soundfile
 # 可选：如需导出 ESP-DL
 # esp-ppq

@@ -10,8 +10,14 @@ import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-from esp_ppq.api import espdl_quantize_torch
-from esp_ppq.executor.torch import TorchExecutor
+# Optional import guard for esp-ppq to improve UX when package is missing
+try:
+    from esp_ppq.api import espdl_quantize_torch
+    from esp_ppq.executor.torch import TorchExecutor
+except Exception as exc:  # pragma: no cover
+    espdl_quantize_torch = None
+    TorchExecutor = None
+    _ESP_PPQ_IMPORT_ERROR = exc
 
 from config.config import TrainingConfig
 from model.model import TinyESPNet
@@ -34,9 +40,17 @@ class WaveformDataset(Dataset):
 
     def __getitem__(self, index: int):
         row = self.records.iloc[index]
-        rel_path = os.path.normpath(row["path"])
-        sample_path = os.path.join(self.root, rel_path)
-        data = torch.load(sample_path, map_location="cpu")
+        rel_path = os.path.normpath(str(row["path"]))
+        # Prefer absolute path if provided, otherwise resolve relative to CWD
+        sample_path = rel_path if os.path.isabs(rel_path) else os.path.join(self.root, rel_path)
+        if not os.path.isfile(sample_path) and os.path.isfile(rel_path):
+            sample_path = rel_path
+
+        # Compatibility: PyTorch < 2.1 has no weights_only flag
+        try:
+            data = torch.load(sample_path, map_location="cpu", weights_only=True)
+        except TypeError:
+            data = torch.load(sample_path, map_location="cpu")
         waveform = data["waveform"].float()
         target_len = int(self.cfg.SEGMENT_SAMPLES)
         if waveform.numel() < target_len:
@@ -55,7 +69,7 @@ def build_model(cfg: TrainingConfig, device: torch.device, weights_path: str) ->
         classifier_hidden=cfg.classifier_hidden,
         dropout=cfg.model_dropout,
     ).to(device)
-    state = torch.load(weights_path, map_location=device)
+    state = torch.load(weights_path, map_location=device, weights_only=True)
     model.load_state_dict(state, strict=False)
     model.eval()
     return model
@@ -124,6 +138,12 @@ def main() -> None:
 
     cfg = TrainingConfig()
     device = torch.device(args.device)
+
+    if espdl_quantize_torch is None or TorchExecutor is None:
+        raise ImportError(
+            "esp-ppq is not installed or failed to import. Install 'esp-ppq' to use this script.\n"
+            f"Original import error: {_ESP_PPQ_IMPORT_ERROR}"
+        )
 
     weights_path = args.weights or str(cfg.MODEL_EXPORT)
     if not os.path.isfile(weights_path):

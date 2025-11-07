@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
+
 from typing import Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+
+# Make project root importable when running this file directly
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.config import DataConfig
 
@@ -18,7 +25,6 @@ def build_metadata(cfg: DataConfig) -> pd.DataFrame:
 
     if not cfg.TRAIN_CSV.exists():
         raise FileNotFoundError(f"Training metadata not found: {cfg.TRAIN_CSV}")
-
     df_meta = pd.read_csv(cfg.TRAIN_CSV)
     for filename in tqdm(df_meta["filename"], desc="Collecting bird audio"):
         audio_path = cfg.TRAIN_AUDIO_DIR / filename
