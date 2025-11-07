@@ -2,6 +2,8 @@
 
 import argparse
 import os
+import sys
+from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import pandas as pd
@@ -18,6 +20,11 @@ except Exception as exc:  # pragma: no cover
     espdl_quantize_torch = None
     TorchExecutor = None
     _ESP_PPQ_IMPORT_ERROR = exc
+
+"""Ensure project root is on sys.path when running this file directly."""
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.config import TrainingConfig
 from model.model import TinyESPNet
