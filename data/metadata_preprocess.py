@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from typing import Tuple
+from typing import List, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -20,7 +20,7 @@ from config.config import DataConfig
 
 
 def build_metadata(cfg: DataConfig) -> pd.DataFrame:
-    """Create a shuffled metadata frame covering positive bird calls and noise."""
+    """Create a shuffled metadata frame covering positive bird calls and noise (incl. ESC-50)."""
     records = []
 
     if not cfg.TRAIN_CSV.exists():
@@ -42,6 +42,8 @@ def build_metadata(cfg: DataConfig) -> pd.DataFrame:
                 if audio_file.suffix.lower() in cfg.VALID_AUDIO_EXTENSIONS:
                     records.append({"path": str(audio_file), "label": cfg.NEGATIVE_LABEL})
 
+    records.extend(_load_esc50_negatives(cfg))
+
     if not records:
         raise RuntimeError("No audio files found while building metadata.")
 
@@ -57,6 +59,36 @@ def build_metadata(cfg: DataConfig) -> pd.DataFrame:
         df["sample_weight"] = 1.0
 
     return df
+
+
+def _load_esc50_negatives(cfg: DataConfig) -> List[dict]:
+    """Optionally pull ESC-50 clips (human sounds) into the negative class."""
+    if not getattr(cfg, "USE_ESC50", False):
+        return []
+
+    meta_path = getattr(cfg, "ESC50_META_PATH", None)
+    audio_dir = getattr(cfg, "ESC50_AUDIO_DIR", None)
+    if not meta_path or not audio_dir or not meta_path.exists() or not audio_dir.exists():
+        return []
+
+    df_esc = pd.read_csv(meta_path)
+    categories = getattr(cfg, "ESC50_CATEGORIES", [])
+    if categories:
+        df_esc = df_esc[df_esc["category"].isin(categories)]
+
+    duplication = max(1, int(getattr(cfg, "ESC50_DUPLICATION", 1)))
+    esc_records = []
+    for _, row in tqdm(
+        df_esc.iterrows(),
+        total=len(df_esc),
+        desc="Collecting ESC-50 negatives",
+        leave=False,
+    ):
+        audio_path = audio_dir / row["filename"]
+        if audio_path.exists():
+            for _ in range(duplication):
+                esc_records.append({"path": str(audio_path), "label": cfg.NEGATIVE_LABEL})
+    return esc_records
 
 
 def split_metadata(

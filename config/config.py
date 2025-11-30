@@ -14,6 +14,20 @@ class DataConfig:
     TRAIN_CSV = DATA_ROOT / "birdclef-2023" / "train_metadata.csv"
     TRAIN_AUDIO_DIR = DATA_ROOT / "birdclef-2023" / "train_audio"
     NOISE_ROOT_DIR = DATA_ROOT / "background_noise"
+    ESC50_ROOT_DIR = DATA_ROOT / "ESC-50-master"
+    ESC50_AUDIO_DIR = ESC50_ROOT_DIR / "audio"
+    ESC50_META_PATH = ESC50_ROOT_DIR / "meta" / "esc50.csv"
+    ESC50_CATEGORIES = [
+        "breathing",
+        "clapping",
+        "coughing",
+        "crying_baby",
+        "laughing",
+        "sneezing",
+        "snoring",
+    ]
+    ESC50_DUPLICATION = 2
+    USE_ESC50 = True
 
     VALID_AUDIO_EXTENSIONS = [".ogg", ".wav", ".mp3", ".mp4", ".flac"]
     POSITIVE_LABEL = 1

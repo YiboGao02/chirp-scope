@@ -187,7 +187,11 @@ def run_preprocessing(df: pd.DataFrame, output_dir: os.PathLike[str], cfg: Train
         new_filepath = os.path.join(output_dir, f"{base_filename}.pt")
 
         torch.save({"waveform": segment.clone(), "label": label.clone()}, new_filepath)
-        new_metadata.append({"path": new_filepath, "label": label.item()})
+
+        record = {"path": new_filepath, "label": label.item()}
+        if "sample_weight" in df.columns:
+            record["sample_weight"] = float(df.iloc[idx].get("sample_weight", 1.0))
+        new_metadata.append(record)
 
     return pd.DataFrame(new_metadata)
 
