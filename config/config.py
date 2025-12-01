@@ -35,7 +35,7 @@ class DataConfig:
 
     VALID_SIZE = 0.10
     TEST_SIZE = 0.05
-    RANDOM_STATE = 42
+    RANDOM_STATE = 3407
 
     TRAIN_METADATA = PROJECT_ROOT / "data" / "train_metadata.csv"
     VALID_METADATA = PROJECT_ROOT / "data" / "valid_metadata.csv"
